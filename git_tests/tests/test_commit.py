@@ -19,6 +19,8 @@ from git_tests.tools.executors.local_executor import LocalExecutor, LocalPexpect
 @pytest.mark.order(5)
 @pytest.mark.commit
 class TestCommit:
+    """Verification of git commit command."""
+
     local_executor = LocalExecutor()
     local_pexpect_executor = LocalPexpectExecutor()
     paths_config = PathsConfig()
@@ -34,11 +36,24 @@ class TestCommit:
 
     @pytest.mark.dependency()
     def test_commit_execution(self):
+        """
+        Given:
+            - local environment with created directory for repository
+            - cloned remote repository
+            - created a new file and added to staging
+            - user and email configured in local git config
+        When:
+            - executing "git commit -m <message>" command
+        Then:
+            - command ends with success and right output
+        """
         commit_result = CommitCommand(
-            variant="basic", command_data={
+            variant="basic",
+            command_data={
                 "commit_message": self.new_commit_message,
-                "cloned_repo_path": self.cloned_repo_path
-            }, executor=self.local_executor
+                "cloned_repo_path": self.cloned_repo_path,
+            },
+            executor=self.local_executor,
         ).run()
         commit_result.rc | should.be.equal.to(0)
         commit_result.stdout | should.contain("Test commit message 01")
@@ -48,31 +63,43 @@ class TestCommit:
 
     @pytest.mark.dependency(depends=["TestCommit::test_commit_execution"])
     def test_commit_verification(self):
+        """
+        Given:
+            - successfully executed "git commit" command
+        When: -
+        Then:
+            - git status command confirms that there are no files to commit
+            - git log command confirms existence of the commit
+        """
         status_result = StatusCommand(
-            variant="basic", command_data={
-                "cloned_repo_path": self.cloned_repo_path
-            }, executor=self.local_executor
+            variant="basic",
+            command_data={"cloned_repo_path": self.cloned_repo_path},
+            executor=self.local_executor,
         ).run()
         status_result.rc | should.be.equal.to(0)
         status_result.stdout | should.contain("nothing to commit, working tree clean")
 
         log_result = LogCommand(
-            variant="basic", command_data={
-                "cloned_repo_path": self.cloned_repo_path
-            }, executor=self.local_executor
+            variant="basic",
+            command_data={"cloned_repo_path": self.cloned_repo_path},
+            executor=self.local_executor,
         ).run()
         log_result.rc | should.be.equal.to(0)
 
         output_match = re.search(
-            (
-                r"[a-zA-Z0-9]{7} "
-                rf"{self.new_commit_message}"
-            ), str(log_result.stdout)
+            (r"[a-zA-Z0-9]{7} " rf"{self.new_commit_message}"), str(log_result.stdout)
         )
         isinstance(output_match, re.Match) | should.be.true
 
     @pytest.fixture(scope="class", autouse=True)
     def prepare_environment(self):
+        """Setup/Teardown fixture.
+        Creates and deletes directory for the test.
+        Runs git clone command.
+        Creates file for commit.
+        Runs git add command.
+        Runs git config command.
+        """
         if self.local_test_dir_path.exists():
             shutil.rmtree(self.local_test_dir_path)
         self.local_test_dir_path.mkdir()
@@ -91,24 +118,26 @@ class TestCommit:
         self._create_file()
 
         add_command_result = AddCommand(
-            variant="basic", command_data={
+            variant="basic",
+            command_data={
                 "new_file_path": self.new_file_path,
                 "cloned_repo_path": self.cloned_repo_path,
-            }, executor=self.local_executor
+            },
+            executor=self.local_executor,
         ).run()
         add_command_result.rc | should.be.equal.to(0)
 
         config_user_result = ConfigCommand(
-            variant="user", command_data={
-                "cloned_repo_path": self.cloned_repo_path
-            }, executor=self.local_executor
+            variant="user",
+            command_data={"cloned_repo_path": self.cloned_repo_path},
+            executor=self.local_executor,
         ).run()
         config_user_result.rc | should.be.equal.to(0)
 
         config_user_result = ConfigCommand(
-            variant="email", command_data={
-                "cloned_repo_path": self.cloned_repo_path
-            }, executor=self.local_executor
+            variant="email",
+            command_data={"cloned_repo_path": self.cloned_repo_path},
+            executor=self.local_executor,
         ).run()
         config_user_result.rc | should.be.equal.to(0)
 

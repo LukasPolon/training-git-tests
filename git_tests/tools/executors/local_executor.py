@@ -1,15 +1,24 @@
 import abc
 import subprocess
-from dataclasses import dataclass
-from subprocess import Popen
-from pathlib import Path
-from typing import Protocol, AnyStr, Any
 
 import pexpect
+
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Protocol, AnyStr
 
 
 @dataclass
 class LocalExecutionResult:
+    """Result structure for LocalExecutor instances.
+
+    Args:
+        args: arguments used for the command execution
+        rc: return code of the executed command
+        stdout: output capture
+        stderr: error otput capture
+    """
+
     args: list
     rc: int
     stdout: AnyStr | list[AnyStr]
@@ -17,14 +26,32 @@ class LocalExecutionResult:
 
 
 class LocalExecutorProtocol(Protocol):
+    """Protocol for the LocalExecutor instances."""
+
     @abc.abstractmethod
-    def execute(self, command: str, **kwargs: Any) -> LocalExecutionResult:
+    def execute(self, command: str, cwd: Path | None = None) -> LocalExecutionResult:
+        """Run command in a implemented way.
+
+        Args:
+            command: command to execute
+            cwd: current working directory, where to execute a command
+        """
         pass
 
 
 class LocalExecutor(LocalExecutorProtocol):
-    def execute(self, command: str, cwd: Path | None = None) -> LocalExecutionResult:
+    """Executes command in local environment, using subprocess.
 
+    Can be used for commands, which ends without any interactive manner.
+    """
+
+    def execute(self, command: str, cwd: Path | None = None) -> LocalExecutionResult:
+        """Run subprocess and gather the output.
+
+        Args:
+            command: command to execute
+            cwd: current working directory, where to execute a command
+        """
         run_kwargs = {
             "stdout": subprocess.PIPE,
             "stderr": subprocess.PIPE,
@@ -44,10 +71,51 @@ class LocalExecutor(LocalExecutorProtocol):
         return execution_result
 
 
-class LocalPexpectExecutor(LocalExecutorProtocol):
+class LocalPexpectExecutorProtocol(Protocol):
+    """Protocol for the LocalPexpectExecutor instances."""
+
+    @abc.abstractmethod
     def execute(
         self, command: str, expect: list[tuple] | None = None, cwd: Path | None = None
     ) -> LocalExecutionResult:
+        """Run command in a implemented way.
+
+        Args:
+            command: command to execute
+            expect: expectation-action pairs for pexpect to handle
+            cwd: current working directory, where to execute a command
+        """
+        pass
+
+
+class LocalPexpectExecutor(LocalPexpectExecutorProtocol):
+    """Executes command in local environment, using Pexpect.
+
+    Can be used to execute interactive commands, which asks for parameters during runtime.
+    """
+
+    def execute(
+        self,
+        command: str,
+        expect: list[tuple[str]] | None = None,
+        cwd: Path | None = None,
+    ) -> LocalExecutionResult:
+        """Run command with Pexpect.
+        Order:
+            - spawns command
+            - iterates through list of expects:
+                - looks for expected line
+                - if found, sends paired line to the stream
+            - expects EOF and closes
+
+        Args:
+            command: command to execute
+            expect: expectation-action pairs for pexpect to handle
+                    Tuple must consist of two elements:
+                        [0] -> expected text
+                        [1] -> command/parameter to send after expected text
+            cwd: current working directory, where to execute a command
+        """
         output = list()
         child = pexpect.spawn(command, cwd=cwd)
         output.append(child.before)

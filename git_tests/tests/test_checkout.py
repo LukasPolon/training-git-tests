@@ -14,6 +14,8 @@ from git_tests.tools.executors.local_executor import LocalExecutor, LocalPexpect
 @pytest.mark.order(4)
 @pytest.mark.checkout
 class TestCheckout:
+    """Verification of git checkout command."""
+
     local_executor = LocalExecutor()
     local_pexpect_executor = LocalPexpectExecutor()
     paths_config = PathsConfig()
@@ -27,35 +29,52 @@ class TestCheckout:
     server_config = inventory_config.get(single_git_server_config.host_name)
 
     def test_checkout_to_new_branch(self):
+        """
+        Given:
+            - local environment with created directory for repository
+            - cloned remote repository
+            - git status confirms that current branch is master
+        When:
+            - executing "git checkout -b <branch>" command
+        Then:
+            - command ends with success and right output
+            - git status confirms branch change
+        """
         status_result = StatusCommand(
-            variant="basic", command_data={
-                "cloned_repo_path": self.cloned_repo_path
-            }, executor=self.local_executor
+            variant="basic",
+            command_data={"cloned_repo_path": self.cloned_repo_path},
+            executor=self.local_executor,
         ).run()
         status_result.rc | should.be.equal.to(0)
         status_result.stdout | should.contain("On branch master")
 
         checkout_result = CheckoutCommand(
-            variant="branch", command_data={
+            variant="branch",
+            command_data={
                 "branch_name": self.new_branch_name,
-                "cloned_repo_path": self.cloned_repo_path
-            }, executor=self.local_executor
+                "cloned_repo_path": self.cloned_repo_path,
+            },
+            executor=self.local_executor,
         ).run()
         checkout_result.rc | should.be.equal.to(0)
-        checkout_result.stderr \
-            | should.contain("Switched to a new branch") \
-            | should.contain(self.new_branch_name)
+        checkout_result.stderr | should.contain(
+            "Switched to a new branch"
+        ) | should.contain(self.new_branch_name)
 
         status_result = StatusCommand(
-            variant="basic", command_data={
-                "cloned_repo_path": self.cloned_repo_path
-            }, executor=self.local_executor
+            variant="basic",
+            command_data={"cloned_repo_path": self.cloned_repo_path},
+            executor=self.local_executor,
         ).run()
         status_result.rc | should.be.equal.to(0)
         status_result.stdout | should.contain(f"On branch {self.new_branch_name}")
 
     @pytest.fixture(scope="class", autouse=True)
     def prepare_environment(self):
+        """Setup/Teardown fixture.
+        Creates and deletes directory for the test.
+        Runs git clone command.
+        """
         if self.local_test_dir_path.exists():
             shutil.rmtree(self.local_test_dir_path)
         self.local_test_dir_path.mkdir()

@@ -1,7 +1,8 @@
 import shutil
+import pytest
+
 from pathlib import Path
 
-import pytest
 from grappa import should
 
 from ..config import PathsConfig, Inventory, SingleGitServerConfig
@@ -13,6 +14,8 @@ from ..helpers.commands.clone_command import CloneCommand
 @pytest.mark.order(2)
 @pytest.mark.clone
 class TestClone:
+    """Verification of git clone command."""
+
     paths_config = PathsConfig()
     inventory_config = Inventory()
     single_git_server_config = SingleGitServerConfig()
@@ -24,6 +27,15 @@ class TestClone:
 
     @pytest.mark.dependency()
     def test_clone_execution(self):
+        """
+        Given:
+            - local environment with created directory for repository
+            - remote Git server with prepared repository to clone
+        When:
+            - executing "git clone" command
+        Then:
+            - command ends with success and right output
+        """
         server_config = self.inventory_config.get(
             self.single_git_server_config.host_name
         )
@@ -46,6 +58,14 @@ class TestClone:
 
     @pytest.mark.dependency(depends=["TestClone::test_clone_execution"])
     def test_clone_directory_structure(self):
+        """
+        Given:
+            - successfully executed "git clone" command
+        When: -
+        Then:
+            - cloned working repository exists
+            - .git directory contains right structure if files and directories
+        """
         self.cloned_repo_path.exists() | should.be.true
         self.cloned_repo_path.is_dir() | should.be.true
 
@@ -67,6 +87,9 @@ class TestClone:
 
     @pytest.fixture(scope="class", autouse=True)
     def handle_directory(self):
+        """Setup/Teardown fixture.
+        Creates and deletes directory for the test.
+        """
         if self.local_test_dir_path.exists():
             shutil.rmtree(self.local_test_dir_path)
         self.local_test_dir_path.mkdir()

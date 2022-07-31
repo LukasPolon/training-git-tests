@@ -13,6 +13,8 @@ from ..helpers.commands.init_command import InitCommand
 @pytest.mark.order(1)
 @pytest.mark.init
 class TestInit:
+    """Verification of git init command."""
+
     paths_config = PathsConfig()
     local_test_dir_path = Path(paths_config.base_dir, "TMP_TEST_INIT")
     git_repo_path_working = Path(local_test_dir_path, "testrepo_working")
@@ -20,6 +22,14 @@ class TestInit:
 
     @pytest.mark.dependency()
     def test_init_working_creation(self):
+        """
+        Given:
+            - local environment with created directory for repository
+        When:
+            - executing "git init" command, creating the working repository
+        Then:
+            - command ends with success and right output
+        """
         local_executor = LocalExecutor()
         result = InitCommand(
             variant="basic",
@@ -33,6 +43,14 @@ class TestInit:
 
     @pytest.mark.dependency(depends=["TestInit::test_init_working_creation"])
     def test_init_working_directory_content(self):
+        """
+        Given:
+            - successfully executed "git init" command
+        When: -
+        Then:
+            - new working repository exists
+            - .git directory contains right structure if files and directories
+        """
         self.git_repo_path_working.exists() | should.be.true
         self.git_repo_path_working.is_dir() | should.be.true
 
@@ -54,6 +72,14 @@ class TestInit:
 
     @pytest.mark.dependency()
     def test_init_bare_creation(self):
+        """
+        Given:
+            - local environment with created directory for repository
+        When:
+            , creating bare repository
+        Then:
+            - command ends with success and right output
+        """
         local_executor = LocalExecutor()
         result = InitCommand(
             variant="bare",
@@ -67,6 +93,14 @@ class TestInit:
 
     @pytest.mark.dependency(depends=["TestInit::test_init_bare_creation"])
     def test_init_bare_directory_content(self):
+        """
+        Given:
+            - successfully executed "git init --bare" command
+        When: -
+        Then:
+            - new bare repository exists
+            - directory contains right structure if files and directories
+        """
         self.git_repo_path_bare.exists() | should.be.true
         self.git_repo_path_bare.is_dir() | should.be.true
 
@@ -86,6 +120,9 @@ class TestInit:
 
     @pytest.fixture(scope="class", autouse=True)
     def handle_directory(self):
+        """Setup/Teardown fixture.
+        Creates and deletes directory for the test.
+        """
         if self.local_test_dir_path.exists():
             shutil.rmtree(self.local_test_dir_path)
         self.local_test_dir_path.mkdir()

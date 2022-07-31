@@ -5,3 +5,4 @@ pytest-order==1.0.1
 ansible-runner==2.2.1
 paramiko==2.11.0
 grappa==1.0.1
+pexpect==4.8.0

@@ -5,33 +5,45 @@ from git_tests.tools.executors.local_executor import LocalExecutionResult, Local
 
 
 class InitCommand(CommandProtocol):
+    """Wrapper for "git init" command."""
+
     def __init__(
         self,
         variant: Literal["basic", "bare"],
-        command_data: dict[str, Any],
+        command_data: dict[Literal["git_repo_path"], Any],
         executor: LocalExecutor,
     ) -> None:
+        """Constructor method for InitCommand.
+
+        executor: Executor instance to use for running the command
+        command_data: data needed for command execution
+        variant: command variant to execute
+        """
         self.__variant = variant
         self.__command_data = command_data
         self.__executor = executor
 
     def run(self) -> LocalExecutionResult:
+        """Runs command with selected arguments."""
         result = self.__executor.execute(
             **self.__get_mapped_variants()[self.__variant]()
         )
         return result
 
     def __get_mapped_variants(self) -> dict[str, Callable]:
+        """Returns variant names and their callable methods mapped."""
         variants = {"basic": self.__get_basic_variant, "bare": self.__get_bare_variant}
         return variants
 
     def __get_basic_variant(self) -> dict[str, Any]:
+        """Variant: basic for "git init"."""
         variant = {
             "command": f"git init {str(self.__command_data.get('git_repo_path'))}"
         }
         return variant
 
     def __get_bare_variant(self) -> dict[str, Any]:
+        """Variant: bare for "git init"."""
         variant = {
             "command": f"git init {str(self.__command_data.get('git_repo_path'))} --bare"
         }
