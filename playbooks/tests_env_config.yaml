@@ -1,0 +1,17 @@
+# ansible-playbook -i inventory.yaml playbooks/tests_env_config.yaml
+---
+- name: Tests configuration
+  hosts: localhost
+  tasks:
+    - name: "Check for Sshpass"
+      ansible.builtin.shell: "sshpass -V"
+      ignore_errors: yes
+      register: is_sshpass_installed
+
+    - name: "Update apt repo"
+      ansible.builtin.shell: "apt-get update"
+      when: is_sshpass_installed.rc != 0
+
+    - name: "Install Sshpass"
+      ansible.builtin.shell: "apt-get install sshpass -y"
+      when: is_sshpass_installed.rc != 0

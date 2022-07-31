@@ -1,0 +1,20 @@
+version: "3"
+services:
+  git-server-custom:
+    image: git-server-custom:latest
+    build: ../git-server
+    container_name: git-server-custom
+    networks:
+      - app-net
+
+  git-tests:
+    image: git-tests:latest
+    build: ../
+    container_name: git_tests
+    networks:
+      - app-net
+    command: ["tail", "-F", "/dev/null"]
+
+networks:
+  app-net:
+    driver: bridge
