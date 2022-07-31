@@ -1,11 +1,12 @@
 import re
 import shutil
+
+import pytest
+
 from pathlib import Path
 from re import Match
 
-import pytest
 from grappa import should
-
 
 from git_tests.config import PathsConfig, SingleGitServerConfig, Inventory
 from git_tests.tools.executors.local_executor import (
@@ -21,6 +22,8 @@ from git_tests.helpers.commands.status_command import StatusCommand
 @pytest.mark.order(3)
 @pytest.mark.add
 class TestAdd:
+    """Verification of git add command."""
+
     local_executor = LocalExecutor()
     local_pexpect_executor = LocalPexpectExecutor()
     paths_config = PathsConfig()
@@ -35,6 +38,18 @@ class TestAdd:
     )
 
     def test_add_one_file(self):
+        """
+        Given:
+            - local environment with created directory for repository
+            - cloned remote repository
+            - created new file in the repository
+            - git status confirms that new file have untracked status
+        When:
+            - executing "git add <file>" command
+        Then:
+            - command ends with success and right output
+            - git status confirms that file changed status to staging
+        """
         new_file_path = Path(self.cloned_repo_path, "new_file01")
         new_file_path.touch()
         new_file_path.is_file() | should.be.true
@@ -73,17 +88,21 @@ class TestAdd:
         isinstance(status_info, Match) | should.be.true
 
     def _run_status(self) -> LocalExecutionResult:
+        """Runs "Git status" command."""
         result_status = StatusCommand(
             variant="basic",
             command_data={"cloned_repo_path": self.cloned_repo_path},
-            executor=self.local_executor
+            executor=self.local_executor,
         ).run()
         result_status.rc | should.be.equal.to(0)
         return result_status
 
     @pytest.fixture(scope="class", autouse=True)
     def handle_directory(self):
-
+        """Setup/Teardown fixture.
+        Creates and deletes directory for the test.
+        Runs git clone command.
+        """
         if self.local_test_dir_path.exists():
             shutil.rmtree(self.local_test_dir_path)
         self.local_test_dir_path.mkdir()

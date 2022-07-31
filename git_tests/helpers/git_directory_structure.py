@@ -2,8 +2,15 @@ from pathlib import Path
 
 
 class GitDirectoryStructure:
+    """Helper class for GIT directory structure representation."""
+
     @classmethod
     def get_initial_dirs(cls, base_dir: Path) -> list[Path]:
+        """Directory structure of fresh .git.
+
+        Args:
+            base_dir: path to .git directory or equivalent
+        """
         initial_dirs = [
             Path(base_dir, "branches"),
             Path(base_dir, "hooks"),
@@ -19,6 +26,11 @@ class GitDirectoryStructure:
 
     @classmethod
     def get_initial_files(cls, base_dir: Path) -> list[Path]:
+        """Files structure of fresh .git.
+
+        Args:
+            base_dir: path to .git directory or equivalent
+        """
         initial_files = [
             Path(base_dir, "HEAD"),
             Path(base_dir, "config"),

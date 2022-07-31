@@ -1,3 +1,4 @@
+# TODO: GIT version must be specified! best solution - install from source
 FROM ubuntu:latest
 
 RUN apt update && apt install  openssh-server sudo -y

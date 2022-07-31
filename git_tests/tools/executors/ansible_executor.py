@@ -8,6 +8,8 @@ from ansible_runner.interface import run
 
 @dataclass
 class AnsibleResultStats:
+    """Result structure for Ansible Playbook stats."""
+
     skipped: dict[str, int]
     ok: dict[str, int]
     dark: dict[str, int]
@@ -20,6 +22,13 @@ class AnsibleResultStats:
 
 @dataclass
 class AnsibleExecutorResult:
+    """Result structure for AnsibleExecutor instances.
+
+    Args:
+        status: Playbook execution status
+        stats: stats collected by Playbook
+    """
+
     status: Literal[
         "starting", "running", "canceled", "timeout", "failed", "successful"
     ]
@@ -27,13 +36,29 @@ class AnsibleExecutorResult:
 
 
 class AnsibleExecutorProtocol(Protocol):
+    """Protocol for the AnsibleExecutor instances."""
+
     @abc.abstractmethod
     def execute(self, playbook: Path, inventory: Path) -> AnsibleExecutorResult:
+        """Run Ansible Playbook.
+
+        Args:
+            playbook: path to the playbook to play
+            inventory: path to the inventory file
+        """
         pass
 
 
 class AnsibleExecutor(AnsibleExecutorProtocol):
+    """Runs Ansible Playbooks."""
+
     def execute(self, playbook: Path, inventory: Path) -> AnsibleExecutorResult:
+        """Run Ansible Playbook.
+
+        Args:
+            playbook: path to the playbook to play
+            inventory: path to the inventory file
+        """
         # TODO: error handling needed
         # TODO: full Ansible log storage needed
         run_result = run(playbook=str(playbook), inventory=str(inventory), quiet=True)

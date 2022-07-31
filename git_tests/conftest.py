@@ -5,6 +5,15 @@ from .tools.executors.ansible_executor import AnsibleExecutor
 
 @pytest.fixture(scope="session", autouse=True)
 def run_initial_env_configuration() -> None:
+    """Runs once, before any tests.
+
+    Runs Ansible Playbooks:
+        - test environment configuration (test container)
+        - GIT installation (test container, git server container)
+        - server configuration (git server container)
+
+    Must be executed in that order.
+    """
     paths_config = PathsConfig()
     ansible_executor = AnsibleExecutor()
 
