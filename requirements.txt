@@ -1,0 +1,7 @@
+ansible==6.1.0
+pytest==7.1.2
+pytest-dependency==0.5.1
+pytest-order==1.0.1
+ansible-runner==2.2.1
+paramiko==2.11.0
+grappa==1.0.1

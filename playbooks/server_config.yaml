@@ -1,0 +1,31 @@
+---
+- name: Server Configuration
+  hosts: git-server-custom
+  become: yes
+  become_user: root
+  tasks:
+    - name: Configure Git server
+      block:
+        - name: "Check if repositories directory exists"
+          stat:
+            path: /git-repos
+          register: result
+
+        - name: "Delete existing repositories"
+          ansible.builtin.file:
+            path: /git-repos
+            state: absent
+          when: result.stat.exists
+
+        - name: "Create repositories directory"
+          ansible.builtin.file:
+            path: /git-repos
+            state: directory
+
+        - name: "Initialize new Git repository"
+          ansible.builtin.shell: git init testrepo.git --bare
+          args:
+            chdir: /git-repos
+
+        - name: "Modify permissions"
+          ansible.builtin.shell: chown -R gituser /git-repos/testrepo.git
